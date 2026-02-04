@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>C-Force PQS Tracker</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #0b1220;
+    color: #fff;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: auto;
+    background: #111827;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+/* HEADER */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    margin-bottom: 25px;
+}
+
+.header img {
+    position: absolute;
+    left: 0;
+    max-height: 170px;
+}
+
+.header h1 {
+    margin: 10;
+    text-align: center;
+}
+
+.row {
+    display: flex;
+    gap: 50px;
+}
+
+.column { flex: 1; }
+
+label {
+    font-weight: bold;
+    display: block;
+    margin-top: 10px;
+}
+
+input, textarea, select, button {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: none;
+    margin-top: 5px;
+}
+
+.section {
+    margin-top: 20px;
+    background: #020617;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.elements {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+}
+
+.element {
+    background: #1f2937;
+    padding: 12px;
+    border-radius: 6px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.element:hover {
+    background: #374151;
+}
+
+.defects {
+    display: none;
+    margin-top: 10px;
+}
+
+video, img {
+    width: 100%;
+    max-width: 320px;
+    margin-top: 10px;
+    border-radius: 6px;
+}
+
+button {
+    background: #22c55e;
+    font-weight: bold;
+    margin-top: 15px;
+    cursor: pointer;
+}
+
+.success {
+    display: none;
+    margin-top: 15px;
+    background: #14532d;
+    padding: 10px;
+    text-align: center;
+    border-radius: 6px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- HEADER -->
+<div class="header">
+    <img src="d3e1dd97-fdec-4bc1-8f5e-1f0e1b8c9ee3.png" alt="C-Force Logo">
+    <h1>C-Force PQS Tracker</h1>
+</div>
+
+<div class="row">
+    <div class="column">
+        <label>Date</label>
+        <input type="date" id="date" readonly>
+    </div>
+    <div class="column">
+        <label>Employee Code</label>
+        <input type="text" id="employee">
+    </div>
+    <div class="column">
+        <label>Station</label>
+        <select id="station">
+            <option value="">Select</option>
+            <option>3</option><option>4</option><option>5</option>
+            <option>6</option><option>7</option><option>8</option>
+            <option>9</option><option>10</option>
+        </select>
+    </div>
+</div>
+
+<label>Problem Description</label>
+<textarea id="problem"></textarea>
+
+<!-- FAILURE CLASSIFICATION -->
+<div class="section">
+<h3>Failure Classification (Required)</h3>
+<label><input type="checkbox" class="severity" value="Critical"> Critical</label>
+<label><input type="checkbox" class="severity" value="Structural"> Structural</label>
+<label><input type="checkbox" class="severity" value="Cosmetic"> Cosmetic</label>
+</div>
+
+<!-- PALLET ELEMENTS -->
+<div class="section">
+<h3>Pallet Elements</h3>
+
+<div class="elements">
+    <div class="element" onclick="showDefects('top')">Top Deck</div>
+    <div class="element" onclick="showDefects('block')">Blocks</div>
+    <div class="element" onclick="showDefects('bottom')">Bottom Deck</div>
+    <div class="element" onclick="showDefects('nails')">Nails</div>
+    <div class="element" onclick="showDefects('tilt')">Tilt</div>
+</div>
+
+<div id="top" class="defects">
+<label><input type="checkbox"> Cracked board</label><br>
+<label><input type="checkbox"> Split board</label>
+</div>
+
+<div id="block" class="defects">
+<label><input type="checkbox"> Broken block</label><br>
+<label><input type="checkbox"> Missing block</label>
+</div>
+
+<div id="bottom" class="defects">
+<label><input type="checkbox"> Missing board</label><br>
+<label><input type="checkbox"> Broken board</label>
+</div>
+
+<div id="nails" class="defects">
+<label><input type="checkbox"> Protruding nails</label>
+</div>
+
+<div id="tilt" class="defects">
+<label><input type="checkbox"> Structural tilt</label>
+</div>
+</div>
+
+<!-- CAMERA -->
+<div class="section">
+<h3>Pallet Photo</h3>
+
+<video id="video" autoplay></video>
+<img id="photo" style="display:none">
+
+<button type="button" onclick="openCam()">Open Camera</button>
+<button type="button" onclick="takePhoto()">Take Photo</button>
+</div>
+
+<button onclick="savePQS()">Save PQS & Add New</button>
+
+<div class="success" id="success">✔ PQS Saved</div>
+
+</div>
+
+<script>
+const WEB_APP_URL =
+"https://script.google.com/macros/s/AKfycbzr_0DyHVidYtTOqqtNxheQD3cGjhNVK6eyFUDUBBf3Tb_DGenUdD0WbdI6dWzXXs-skQ/exec";
+
+// Set today
+document.getElementById("date").value =
+    new Date().toISOString().split("T")[0];
+
+let stream = null;
+
+function showDefects(id) {
+    document.querySelectorAll(".defects").forEach(d => d.style.display = "none");
+    document.getElementById(id).style.display = "block";
+}
+
+function openCam() {
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(s => {
+            stream = s;
+            video.srcObject = s;
+        })
+        .catch(() => alert("Camera access denied"));
+}
+
+function takePhoto() {
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext("2d").drawImage(video, 0, 0);
+    photo.src = canvas.toDataURL("image/png");
+    photo.style.display = "block";
+}
+
+function savePQS() {
+
+    const severity = [...document.querySelectorAll(".severity:checked")]
+        .map(c => c.value)
+        .join(", ");
+
+    if (!employee.value || !station.value || !severity || !photo.src) {
+        alert("Please complete all required fields and take a photo");
+        return;
+    }
+
+    const payload = {
+        date: date.value,
+        employee: employee.value,
+        station: station.value,
+        problem: problem.value,
+        severity: severity,
+        defects: [...document.querySelectorAll(".defects input:checked")]
+            .map(c => c.parentElement.innerText.trim())
+            .join(", "),
+        photo: photo.src.split(",")[1]
+    };
+
+    fetch(WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(() => {
+        success.style.display = "block";
+        setTimeout(() => success.style.display = "none", 2000);
+
+        employee.value = "";
+        station.value = "";
+        problem.value = "";
+        photo.src = "";
+        photo.style.display = "none";
+
+        document.querySelectorAll("input[type=checkbox]").forEach(c => c.checked = false);
+        document.querySelectorAll(".defects").forEach(d => d.style.display = "none");
+    })
+    .catch(err => {
+        alert("Network error. PQS NOT saved.");
+        console.error(err);
+    });
+}
+</script>
+
+</body>
+</html>
