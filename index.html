@@ -13,14 +13,13 @@ body {
 }
 
 .container {
-    max-width: 1200px;
+    max-width: 1300px;
     margin: auto;
     background: #111827;
     padding: 20px;
     border-radius: 10px;
 }
 
-/* HEADER */
 .header {
     display: flex;
     align-items: center;
@@ -35,17 +34,14 @@ body {
     max-height: 170px;
 }
 
-.header h1 {
-    margin: 10;
-    text-align: center;
-}
-
 .row {
     display: flex;
     gap: 50px;
 }
 
-.column { flex: 1; }
+.column {
+    flex: 1;
+}
 
 label {
     font-weight: bold;
@@ -70,24 +66,30 @@ input, textarea, select, button {
 
 .elements {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     gap: 10px;
 }
 
 .element {
-    background: #1f2937;
-    padding: 12px;
+    padding: 10px;
     border-radius: 6px;
     text-align: center;
     cursor: pointer;
+    font-weight: bold;
+    border: 2px solid transparent;
 }
 
-.element:hover {
-    background: #374151;
+.element.active {
+    border-color: #fff;
 }
 
-.defects {
+.hidden {
     display: none;
+}
+
+.defect-box {
+    padding: 12px;
+    border-radius: 6px;
     margin-top: 10px;
 }
 
@@ -120,9 +122,8 @@ button {
 
 <div class="container">
 
-<!-- HEADER -->
 <div class="header">
-    <img src="d3e1dd97-fdec-4bc1-8f5e-1f0e1b8c9ee3.png" alt="C-Force Logo">
+    <img src="d3e1dd97-fdec-4bc1-8f5e-1f0e1b8c9ee3.png">
     <h1>C-Force PQS Tracker</h1>
 </div>
 
@@ -139,9 +140,15 @@ button {
         <label>Station</label>
         <select id="station">
             <option value="">Select</option>
-            <option>3</option><option>4</option><option>5</option>
-            <option>6</option><option>7</option><option>8</option>
-            <option>9</option><option>10</option>
+            <option>STATION 3</option>
+            <option>STATION 4</option>
+            <option>STATION 5</option>
+            <option>STATION 6</option>
+            <option>STATION 7</option>
+            <option>STATION 8</option>
+            <option>STATION 10</option>
+            <option>STATION 11</option>
+            <option>STATION 12</option>
         </select>
     </div>
 </div>
@@ -149,158 +156,177 @@ button {
 <label>Problem Description</label>
 <textarea id="problem"></textarea>
 
-<!-- FAIL OR PASS -->
 <div class="section">
-<h3>Failure Classification (Required)</h3>
-<label><input type="checkbox" class="severity" value="Critical"> FALL</label>
-<label><input type="checkbox" class="severity" value="Structural"> PASS</label>
+<h3>Result (Required)</h3>
+<label><input type="radio" name="result" value="PASS" onchange="toggleFail()"> PALLET PASS</label>
+<label><input type="radio" name="result" value="FAIL" onchange="toggleFail()"> PALLET FAIL</label>
 </div>
 
-<!-- FAILURE CLASSIFICATION -->
-<div class="section">
-<h3>Failure Classification (Required)</h3>
+<div class="section hidden" id="failClassification">
+<h3>Failure Classification</h3>
 <label><input type="checkbox" class="severity" value="Critical"> Critical</label>
 <label><input type="checkbox" class="severity" value="Structural"> Structural</label>
 <label><input type="checkbox" class="severity" value="Cosmetic"> Cosmetic</label>
 </div>
 
-<!-- PALLET ELEMENTS -->
+<div class="section hidden" id="palletElements">
+
+<h3>Top Deck</h3>
+<div class="elements" id="topDeck"></div>
+
+<h3 style="margin-top:20px">Bottom Deck</h3>
+<div class="elements" id="bottomDeck"></div>
+
+<div id="defectBox" class="defect-box hidden">
+<h4>Select Defect</h4>
+<div id="defectList"></div>
+</div>
+
+</div>
+
 <div class="section">
-<h3>Pallet Elements</h3>
-
-<div class="elements">
-    <div class="element" onclick="showDefects('top')">Top Deck</div>
-    <div class="element" onclick="showDefects('block')">Blocks</div>
-    <div class="element" onclick="showDefects('bottom')">Bottom Deck</div>
-    <div class="element" onclick="showDefects('nails')">Nails</div>
-    <div class="element" onclick="showDefects('tilt')">Tilt</div>
-</div>
-
-<div id="top" class="defects">
-<label><input type="checkbox"> Cracked board</label><br>
-<label><input type="checkbox"> Split board</label>
-</div>
-
-<div id="block" class="defects">
-<label><input type="checkbox"> Broken block</label><br>
-<label><input type="checkbox"> Missing block</label>
-</div>
-
-<div id="bottom" class="defects">
-<label><input type="checkbox"> Missing board</label><br>
-<label><input type="checkbox"> Broken board</label>
-</div>
-
-<div id="nails" class="defects">
-<label><input type="checkbox"> Protruding nails</label>
-</div>
-
-<div id="tilt" class="defects">
-<label><input type="checkbox"> Structural tilt</label>
-</div>
-</div>
-
-<!-- CAMERA -->
-<div class="section">
-<h3>Pallet Photo</h3>
-
+<h3>PHOTO OF DEFECT</h3>
 <video id="video" autoplay></video>
-<img id="photo" style="display:none">
-
+<img id="photo" class="hidden">
 <button type="button" onclick="openCam()">Open Camera</button>
 <button type="button" onclick="takePhoto()">Take Photo</button>
 </div>
 
 <button onclick="savePQS()">Save PQS & Add New</button>
-
-<div class="success" id="success">✔ PQS Saved</div>
+<div class="success" id="success">✔ PQS Saved (Local Only)</div>
 
 </div>
 
 <script>
-const WEB_APP_URL =
-"https://script.google.com/macros/s/AKfycbzr_0DyHVidYtTOqqtNxheQD3cGjhNVK6eyFUDUBBf3Tb_DGenUdD0WbdI6dWzXXs-skQ/exec";
+const elementColors = {
+TB1A:"#2563eb",TB2A:"#7c3aed",TB3A:"#db2777",TB3B:"#ea580c",TB3C:"#16a34a",TB2B:"#0d9488",TB1B:"#9333ea",
+BB10A:"#1d4ed8",BB10B:"#2563eb",BB11A:"#4f46e5",BB12A:"#7c3aed",BB12B:"#9333ea",
+ST4A:"#be123c",ST4B:"#e11d48",ST5A:"#f43f5e",
+BL6A:"#15803d",BL6B:"#16a34a",BL6C:"#22c55e",BL6D:"#4ade80",
+BL7A:"#0f766e",BL7B:"#14b8a6",BL8A:"#0d9488",BL8B:"#06b6d4",BL9A:"#0284c7"
+};
 
-// Set today
-document.getElementById("date").value =
-    new Date().toISOString().split("T")[0];
+const topDeck=["TB1A","TB2A","TB3A","TB3B","TB3C","TB2B","TB1B"];
+const bottomDeck=["BB10A","BB10B","BB11A","BB12A","BB12B","ST4A","ST4B","ST5A","BL6A","BL6B","BL6C","BL6D","BL7A","BL7B","BL8A","BL8B","BL9A"];
 
-let stream = null;
+const defects=[
+["CH","Chip / Hole"],["HS","Horizontal Split"],["VS","Vertical Split"],
+["ME","Missing Element"],["SQ","Squareness"],["DA","Other Damage"],
+["PN","Protruding Nail"],["RN","Raised Nail"],["MN","Missing Nail"]
+];
 
-function showDefects(id) {
-    document.querySelectorAll(".defects").forEach(d => d.style.display = "none");
-    document.getElementById(id).style.display = "block";
+let elementResults={};
+let stream=null;
+
+date.value=new Date().toISOString().split("T")[0];
+
+function renderDeck(id,arr){
+  const c=document.getElementById(id);
+  arr.forEach(el=>{
+    const d=document.createElement("div");
+    d.className="element";
+    d.style.background=elementColors[el];
+    d.innerText=el;
+    d.onclick=()=>selectElement(el,d);
+    c.appendChild(d);
+  });
+}
+renderDeck("topDeck",topDeck);
+renderDeck("bottomDeck",bottomDeck);
+
+function toggleFail(){
+  const r=document.querySelector('input[name="result"]:checked')?.value;
+  failClassification.classList.toggle("hidden",r!=="FAIL");
+  palletElements.classList.toggle("hidden",r!=="FAIL");
 }
 
-function openCam() {
-    navigator.mediaDevices.getUserMedia({ video: true })
-        .then(s => {
-            stream = s;
-            video.srcObject = s;
-        })
-        .catch(() => alert("Camera access denied"));
+function selectElement(el,div){
+  document.querySelectorAll(".element").forEach(e=>e.classList.remove("active"));
+  div.classList.add("active");
+  defectBox.style.background=elementColors[el];
+  defectList.innerHTML="";
+  defects.forEach(d=>{
+    defectList.innerHTML+=`
+<label>
+<input type="radio" name="defect" onclick="selectDefect('${el}','${d[0]} - ${d[1]}')">
+${d[0]} - ${d[1]}
+</label><br>`;
+  });
+  defectBox.classList.remove("hidden");
 }
 
-function takePhoto() {
-    const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.getContext("2d").drawImage(video, 0, 0);
-    photo.src = canvas.toDataURL("image/png");
-    photo.style.display = "block";
+function selectDefect(el,val){
+  elementResults[el]=val;
 }
 
-function savePQS() {
+function openCam(){
+  navigator.mediaDevices.getUserMedia({video:true})
+  .then(s=>{stream=s;video.srcObject=s;});
+}
 
-    const severity = [...document.querySelectorAll(".severity:checked")]
-        .map(c => c.value)
-        .join(", ");
+function takePhoto(){
+  const c=document.createElement("canvas");
+  c.width=video.videoWidth;
+  c.height=video.videoHeight;
+  c.getContext("2d").drawImage(video,0,0);
+  photo.src=c.toDataURL("image/png");
+  photo.classList.remove("hidden");
+}
 
-    if (!employee.value || !station.value || !severity || !photo.src) {
-        alert("Please complete all required fields and take a photo");
-        return;
-    }
+function savePQS(){
+  if(!employee.value || !station.value || Object.keys(elementResults).length === 0 || !photo.src){
+    alert("Please complete all required fields and take a photo");
+    return;
+  }
 
-    const payload = {
-        date: date.value,
-        employee: employee.value,
-        station: station.value,
-        problem: problem.value,
-        severity: severity,
-        defects: [...document.querySelectorAll(".defects input:checked")]
-            .map(c => c.parentElement.innerText.trim())
-            .join(", "),
-        photo: photo.src.split(",")[1]
-    };
+  const failureClassification = [...document.querySelectorAll(".severity:checked")]
+    .map(c => c.value)
+    .join(", ");
 
-    fetch(WEB_APP_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload)
+fetch("https://script.google.com/macros/s/AKfycbz44G4wxSpwD5iIf8NYZSztbu22tZ8SbHvfoCZrz2JIV9owZ88bWg5D2c9Cp8I42fRafQ/exec", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      date: date.value,
+      employee: employee.value,
+      station: station.value,
+      problem: problem.value,
+      result: document.querySelector('input[name="result"]:checked')?.value,
+      failureClassification: failureClassification,
+      elements: elementResults,   // 🔑 TB1A → defect
+      photo: photo.src.split(",")[1]
     })
-    .then(() => {
-        success.style.display = "block";
-        setTimeout(() => success.style.display = "none", 2000);
+  })
+  .then(() => {
+    showSuccess();
+    resetForm();
+  })
+  .catch(err => {
+    alert("Error saving PQS");
+    console.error(err);
+  });
+}
 
-        employee.value = "";
-        station.value = "";
-        problem.value = "";
-        photo.src = "";
-        photo.style.display = "none";
+function showSuccess(){
+  success.style.display="block";
+  setTimeout(()=>success.style.display="none",2000);
+}
 
-        document.querySelectorAll("input[type=checkbox]").forEach(c => c.checked = false);
-        document.querySelectorAll(".defects").forEach(d => d.style.display = "none");
-    })
-    .catch(err => {
-        alert("Network error. PQS NOT saved.");
-        console.error(err);
-    });
+function resetForm(){
+  employee.value="";
+  station.value="";
+  problem.value="";
+  document.querySelectorAll("input[type=radio],input[type=checkbox]").forEach(i=>i.checked=false);
+  document.querySelectorAll(".element").forEach(e=>e.classList.remove("active"));
+  elementResults={};
+  failClassification.classList.add("hidden");
+  palletElements.classList.add("hidden");
+  defectBox.classList.add("hidden");
+  photo.src="";
+  photo.classList.add("hidden");
+  if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
 }
 </script>
 
 </body>
 </html>
-
